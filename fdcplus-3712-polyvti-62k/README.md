@@ -22,7 +22,23 @@
 
 The system has 63K of RAM, but CP/M is deliberately generated as a 62K system so the F780H-FBFFH region can be used for BIOS runtime storage without increasing the on-disk BIOS reservation.
 
-## Images
+## Preserved images
+
+Two exact image builds are preserved here. Because the ChatGPT GitHub connector used to create this repository cannot directly transfer binary files, the repository stores each image as a very small compressed XOR delta against the original DeRamp 48K image. `tools/rebuild_from_deramp.py` recreates the exact 256,256-byte `.img` files and verifies their SHA-256 checksums.
+
+Required upstream base image:
+
+`CPM22v1.0-FDC+3712-48K.dsk`
+
+SHA-256: `2c8f2054475d0ef00eb913a887709a3942053d2231b3405547d8ffafdff60164`
+
+Rebuild both preserved images with:
+
+```bash
+python3 tools/rebuild_from_deramp.py /path/to/CPM22v1.0-FDC+3712-48K.dsk
+```
+
+The generated images are written under `images/`.
 
 ### `CPM22v1.0-FDC+3712-62K-PolyVTI-2Drive.img`
 
@@ -53,8 +69,14 @@ The existing two-drive BIOS ends at approximately F710H, leaving unused space in
 
 The original `SELDSK` entry at F5C1H is changed to jump to the extended selector. The original low-level `SELSEC` routine already does `CURDRV & 03H` and rotates the drive number into the FD3712 drive-select bits, so no low-level FDC command changes are required.
 
+## Source and tools
+
+- `source/FDCPLUS_VTI_BIOS_2DRIVE.ASM` — preserved source for the known-good two-drive BIOS.
+- `source/FDCPLUS_VTI_BIOS_4DRIVE.ASM` — source documenting the four-drive revision while preserving the proven BIOS addresses.
+- `tools/make_4drive.py` — creates the four-drive image directly from the known-good two-drive image and verifies the result.
+- `tools/rebuild_from_deramp.py` — reconstructs both exact images from the DeRamp 48K base image and the repository's compressed XOR deltas.
+- `patches/` — lossless deltas for the two exact disk images.
+
 ## Provenance
 
 The build originated from Mike Douglas / DeRamp's `CPM22v1.0-FDC+3712-48K` CP/M 2.2 distribution. The custom BIOS adds the native FDC+ Drive Type 8 disk interface and Polymorphic VTI console/keyboard support, and changes the CP/M size to 62K.
-
-`source/FDCPLUS_VTI_BIOS_2DRIVE.ASM` is the preserved source for the known-good two-drive version. `source/FDCPLUS_VTI_BIOS_4DRIVE.ASM` documents the four-drive revision. `tools/make_4drive.py` reproduces the four-drive image byte-for-byte from the known-good two-drive image.
